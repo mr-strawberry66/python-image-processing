@@ -29,18 +29,29 @@ def create_hero(infile: str) -> str:
     returns: (str)
         The path of the new cropped file.
     """
-    size = 740, 740
     outfile = re.search("(.*)\.[a-zA-Z]{3,4}", infile)[1] + "-hero.png"
 
     im = Image.open(infile)
     width = im.size[0]
-    if width >= 740:
-        im.thumbnail(size, Image.ANTIALIAS)
-        sharpen = ImageEnhance.Sharpness(im)
-        sharpen.enhance(1.5).save(outfile, "PNG")
-        return outfile
+    height = im.size[1]
+    aspect = width / float(height)
+    required_width = 640
+    required_height = 350
+    required_aspect = required_width / float(required_width)
+
+    if aspect > required_aspect:
+        new_width = int(required_aspect * height)
+        offset = (width - new_width) / 2
+        resize = (offset, 0, width - offset, height)
     else:
-        print("Main image must be at least 740px wide")
+        new_height = int(width / required_aspect)
+        offset = (height - new_height) / 2
+        resize = (0, offset, width, height - offset)
+
+    im.crop(resize).resize((required_width, required_height), Image.ANTIALIAS)
+    sharpen = ImageEnhance.Sharpness(im)
+    sharpen.enhance(1.5).save(outfile, "PNG")
+    return outfile
 
 
 if __name__ == "__main__":
