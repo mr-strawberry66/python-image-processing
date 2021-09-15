@@ -3,6 +3,9 @@ import re
 import sys
 from PIL import Image, ImageEnhance
 
+REQUIRED_WIDTH = 640
+REQUIRED_HEIGHT = 350
+
 
 def main():
     """
@@ -35,23 +38,26 @@ def create_hero(infile: str) -> str:
     width = im.size[0]
     height = im.size[1]
     aspect = width / float(height)
-    required_width = 640
-    required_height = 350
-    required_aspect = required_width / float(required_width)
+    required_aspect = REQUIRED_WIDTH / float(REQUIRED_WIDTH)
 
-    if aspect > required_aspect:
-        new_width = int(required_aspect * height)
-        offset = (width - new_width) / 2
-        resize = (offset, 0, width - offset, height)
+    if width >= REQUIRED_WIDTH:
+        if aspect > required_aspect:
+            new_width = int(required_aspect * height)
+            offset = (width - new_width) / 2
+            resize = (0, 0, width - (offset * 2), height)
+        else:
+            new_height = int(width / required_aspect)
+            offset = (height - new_height) / 2
+            resize = (0, 0, width, height - (offset * 2))
+
+        hero = im.crop(resize).resize(
+            (REQUIRED_WIDTH, REQUIRED_HEIGHT), resample=Image.ANTIALIAS
+        )
+        sharpen = ImageEnhance.Sharpness(hero)
+        sharpen.enhance(1.5).save(outfile, "PNG")
+        return outfile
     else:
-        new_height = int(width / required_aspect)
-        offset = (height - new_height) / 2
-        resize = (0, offset, width, height - offset)
-
-    im.crop(resize).resize((required_width, required_height), Image.ANTIALIAS)
-    sharpen = ImageEnhance.Sharpness(im)
-    sharpen.enhance(1.5).save(outfile, "PNG")
-    return outfile
+        print("Image must be at least 640px wide")
 
 
 if __name__ == "__main__":
